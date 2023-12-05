@@ -1,21 +1,17 @@
-library(mice)
+library(mice, warn.conflicts = F, quietly = T)
 library(imputeangles)
 
-# file_path <- file.path("R", "pn_arx_imp_sim_study")
-# source(file.path(file_path, "generate_data.R"))
-# source(file.path(file_path, "impute.R"))
-# source(file.path(file_path, "analysis.R"))
-# source(file.path(file_path, "utils.R"))
-source(file.path("generate_data.R"))
-source(file.path("impute.R"))
-source(file.path("analysis.R"))
-source(file.path("utils.R"))
+file_path <- file.path("R")
+source(file.path(file_path, "generate_data.R"))
+source(file.path(file_path, "impute.R"))
+source(file.path(file_path, "analysis.R"))
+source(file.path(file_path, "utils.R"))
 
 # From command line get the following arguments
-N_sim <- 10 # Number of simulation iterations
-N_sample <- 100 # Sample size
+N_sim <- 100 # Number of simulation iterations
+N_sample <- 250 # Sample size
 init_seed <- 1234 # Initial seed
-M <- 5 # Number of imputations
+M <- 25 # Number of imputations
 pop_pars <- list(
     mu_0 = c(0,0),
     B_vec = c(1, 3, 0, -5),
@@ -28,19 +24,19 @@ pop_pars <- list(
 miss_pars <- list(
     freq = c(1),
     mech = "MAR",
-    p_miss = 0.5
+    p_miss = 0.75
 ) # Missingness mechanism parameters (also controls MAR/MNAR)
 
-methods <- c("complete", "bpnreg", "vmreg", "pnregid", "pnarxid")
+methods <- c("complete", "vmreg", "pnregid", "pnarxid") # "bpnreg"
 
 # seeds <- matrix(NA, nrow = N_sim, ncol = 626)
-# set.seed(init_seed)
+# set.seed(init_seed * set_n)
 
 # pars <- pop_pars, miss_pars, beta_hat, se_beta_hat, df_beta_hat, fmi, p_miss
 # total_pars <- length(pop_pars) + length(miss_pars) + 4*P + 1
 
 x1 <- parallel::mclapply(1:N_sim,
-               mc.cores = 20,
+               mc.cores = 15,
                 function(x) {
     print(x)
 
@@ -81,15 +77,15 @@ x1 <- parallel::mclapply(1:N_sim,
    return(results)
 })
 
-out_path <- file.path("..", "..", "sim-results")
+out_path <- file.path("sim-results")
 
 
-saveRDS(x1, file = paste0(out_path, "/sim-results_", Sys.Date(), ".rds"))
+saveRDS(x1, file = paste0(out_path, "/sim-results_", Sys.Date(), "-sim_setting-", 8, ".rds"))
 
 x1 |> 
     dplyr::bind_rows() |>
-    readr::write_csv(paste0(out_path, "/sim-results_", Sys.Date(), ".csv"))
+    readr::write_csv(paste0(out_path, "/sim-results_", Sys.Date(), "-sim_setting-", 8, ".csv"))
 
-# x1 <- readRDS("../../sim-results/sim-results_2023-11-30.rds")
+# x1 <- readRDS("sim-results/sim-results_2023-11-30.rds")
 # 
 # x1 |> dplyr::bind_rows()
