@@ -1,4 +1,13 @@
 impute <- function(data, l_method = "pmm", c_method = "bpnreg", M = 3, maxit = 5) {
+    if (c_method == "locf") {
+        imp <- data
+        imp$theta <- imputeTS::na_locf(imp$theta)
+        
+        imp$U1 <- imputeTS::na_locf(imp$U1)
+        imp$U2 <- imputeTS::na_locf(imp$U2)
+        return(imp)
+    }
+    
     imp0 <- mice(data, method = l_method, m = 1, maxit = 0)
     
     mthd <- imp0$method

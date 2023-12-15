@@ -11,7 +11,7 @@ source(file.path(file_path, "utils.R"))
 N_sim <- 500 # Number of simulation iterations
 N_sample <- 500 # Sample size
 init_seed <- 1234 # Initial seed
-M <- 10 # Number of imputations
+M <- 25 # Number of imputations
 pop_pars <- list(
     mu_0 = c(0,0),
     B_vec = c(1, 3, 0, -5),
@@ -24,10 +24,10 @@ pop_pars <- list(
 miss_pars <- list(
     freq = c(1),
     mech = "MAR",
-    p_miss = 0.75
+    p_miss = 0.5
 ) # Missingness mechanism parameters (also controls MAR/MNAR)
 
-methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxid") # "bpnreg"
+methods <- c("complete", "vmreg", "pnregid", "pnarxid") # "bpnreg"
 
 # seeds <- matrix(NA, nrow = N_sim, ncol = 626)
 # set.seed(init_seed * set_n)
@@ -51,33 +51,21 @@ x1 <- parallel::mclapply(1:N_sim,
    
    iter_res <- lapply(methods, function(mtd) {
        if (mtd == "complete") {
-           res_lm <- lm_analysis(sample_data)
-           res_lm$prop_miss <- 0
-           res_ar <- arx_analysis(sample_data)
-           res_ar$prop_miss <- 0
+           res <- arx_analysis(sample_data)
        }
        else if (mtd == "locf") {
            imp_data <- impute(inc_data, l_method = "locf", c_method = mtd, M = M, maxit = 1)
            
-           res_lm <- lm_analysis(imp_data)
-           res_lm$prop_miss <- c(0,prop_miss)
-           res_ar <- arx_analysis(imp_data)
-           res_ar$prop_miss <- c(0, 0, prop_miss)
+           res <- arx_analysis(imp_data)
        }
        else {
            imp_data <- impute(inc_data, l_method = "pmm", c_method = mtd, M = M, maxit = 1)
            
-           res_lm <- lm_analysis(imp_data)
-           res_lm$prop_miss <- c(0,prop_miss)
-           res_ar <- arx_analysis(imp_data)
-           res_ar$prop_miss <- c(0, 0, prop_miss)
+           res <- arx_analysis(imp_data)
        }
        
-       res_lm$analysis_model <- "lm"
-       res_ar$analysis_model <- "arx"
-       res <- dplyr::bind_rows(res_lm, res_ar)
-       
-       res$par_val <- c(pop_pars$beta_y, pop_pars$psi_y, pop_pars$beta_y)
+       res$par_val <- c(pop_pars$psi_y, pop_pars$beta_y)
+       res$p_miss <- c(0,0, prop_miss)
        res$iter <- x
        res$method <- mtd
        return(res)
@@ -92,18 +80,13 @@ x1 <- parallel::mclapply(1:N_sim,
 out_path <- file.path("sim-results")
 
 
-saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 7, ".rds"))
+saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-arima-", Sys.Date(), "-sim_setting-", 5, ".rds"))
 
 x2 <- x1 |> 
     dplyr::bind_rows()
-f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 7, ".csv")
+f_out <- paste0(out_path, "/sim-results-mar-ts-mi-arima-sim_setting-", 5, ".csv")
 if (file.exists(f_out)) {
     readr::write_csv(x2, f_out, append = TRUE)
 } else {
     readr::write_csv(x2, f_out)
 }
-    
-
-# x1 <- readRDS("sim-results/sim-results_2023-11-30.rds")
-# 
-# x1 |> dplyr::bind_rows()

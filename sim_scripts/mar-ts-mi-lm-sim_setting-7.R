@@ -8,9 +8,9 @@ source(file.path(file_path, "analysis.R"))
 source(file.path(file_path, "utils.R"))
 
 # From command line get the following arguments
-N_sim <- 500 # Number of simulation iterations
-N_sample <- 500 # Sample size
-init_seed <- 1234 # Initial seed
+N_sim <- 200 # Number of simulation iterations
+N_sample <- 250 # Sample size
+init_seed <- 987 # Initial seed
 M <- 10 # Number of imputations
 pop_pars <- list(
     mu_0 = c(0,0),
@@ -51,33 +51,21 @@ x1 <- parallel::mclapply(1:N_sim,
    
    iter_res <- lapply(methods, function(mtd) {
        if (mtd == "complete") {
-           res_lm <- lm_analysis(sample_data)
-           res_lm$prop_miss <- 0
-           res_ar <- arx_analysis(sample_data)
-           res_ar$prop_miss <- 0
+           res <- lm_analysis(sample_data)
        }
        else if (mtd == "locf") {
            imp_data <- impute(inc_data, l_method = "locf", c_method = mtd, M = M, maxit = 1)
            
-           res_lm <- lm_analysis(imp_data)
-           res_lm$prop_miss <- c(0,prop_miss)
-           res_ar <- arx_analysis(imp_data)
-           res_ar$prop_miss <- c(0, 0, prop_miss)
+           res <- lm_analysis(imp_data)
        }
        else {
            imp_data <- impute(inc_data, l_method = "pmm", c_method = mtd, M = M, maxit = 1)
            
-           res_lm <- lm_analysis(imp_data)
-           res_lm$prop_miss <- c(0,prop_miss)
-           res_ar <- arx_analysis(imp_data)
-           res_ar$prop_miss <- c(0, 0, prop_miss)
+           res <- lm_analysis(imp_data)
        }
        
-       res_lm$analysis_model <- "lm"
-       res_ar$analysis_model <- "arx"
-       res <- dplyr::bind_rows(res_lm, res_ar)
-       
-       res$par_val <- c(pop_pars$beta_y, pop_pars$psi_y, pop_pars$beta_y)
+       res$par_val <- pop_pars$beta_y
+       res$p_miss <- c(0, prop_miss)
        res$iter <- x
        res$method <- mtd
        return(res)
@@ -92,18 +80,13 @@ x1 <- parallel::mclapply(1:N_sim,
 out_path <- file.path("sim-results")
 
 
-saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 7, ".rds"))
+saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-lm-", Sys.Date(), "-sim_setting-", 7, ".rds"))
 
 x2 <- x1 |> 
     dplyr::bind_rows()
-f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 7, ".csv")
+f_out <- paste0(out_path, "/sim-results-mar-ts-mi-lm-sim_setting-", 7, ".csv")
 if (file.exists(f_out)) {
     readr::write_csv(x2, f_out, append = TRUE)
 } else {
     readr::write_csv(x2, f_out)
 }
-    
-
-# x1 <- readRDS("sim-results/sim-results_2023-11-30.rds")
-# 
-# x1 |> dplyr::bind_rows()

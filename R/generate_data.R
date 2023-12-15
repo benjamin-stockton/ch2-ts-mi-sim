@@ -22,18 +22,22 @@ generate_data <- function(N_sample, population_parameters) {
     theta <- atan2(U[,2], U[,1])
     
     beta_y <- population_parameters$beta_y 
+    beta_0 <- beta_y[1]
     sigma_y <- population_parameters$sigma_y
     psi_y <- population_parameters$psi_y
     
-    X_mat <- cbind(rep(1, N_sample), X, U)
-    y_resp <- numeric(N_sample)
-    err <- rnorm(N_sample, 0, sigma_y)
+    X_mat <- cbind(X, U)
+    # y_resp <- numeric(N_sample)
+    # err <- rnorm(N_sample, 0, sigma_y)
     
-    y_resp[1] <- X_mat[1,] %*% beta_y + err[1]
+    # y_resp[1] <- beta_0 + X_mat[1,] %*% beta_y[2:5] + err[1]
+    y_resp <- arima.sim(n = N_sample, model = list(order = c(1,0,0), ar = c(psi_y)),
+                        sd = sigma_y) 
+    y_resp <- beta_0 + y_resp + X_mat %*% beta_y[2:5]
     
-    for(i in 2:N_sample) {
-        y_resp[i] <- psi_y * y_resp[i-1] + X_mat[i,] %*% beta_y + err[i]
-    }
+    # for(i in 2:N_sample) {
+    #     y_resp[i] <- beta_0 + psi_y * y_resp[i-1] + X_mat[i,] %*% beta_y[2:5] + err[i]
+    # }
     
     df <- data.frame(
         theta = theta,
