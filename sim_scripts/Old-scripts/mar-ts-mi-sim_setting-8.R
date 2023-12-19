@@ -11,7 +11,7 @@ source(file.path(file_path, "utils.R"))
 N_sim <- 500 # Number of simulation iterations
 N_sample <- 500 # Sample size
 init_seed <- 1234 # Initial seed
-M <- 10 # Number of imputations
+M <- 25 # Number of imputations
 pop_pars <- list(
     mu_0 = c(0,0),
     B_vec = c(1, 3, 0, -5),
@@ -24,7 +24,7 @@ pop_pars <- list(
 miss_pars <- list(
     freq = c(1),
     mech = "MAR",
-    p_miss = 0.1
+    p_miss = 0.75
 ) # Missingness mechanism parameters (also controls MAR/MNAR)
 
 methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxid") # "bpnreg"
@@ -92,11 +92,11 @@ x1 <- parallel::mclapply(1:N_sim,
 out_path <- file.path("sim-results")
 
 
-saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 2, ".rds"))
+saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 8, ".rds"))
 
 x2 <- x1 |> 
     dplyr::bind_rows()
-f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 2, ".csv")
+f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 8, ".csv")
 if (file.exists(f_out)) {
     readr::write_csv(x2, f_out, append = TRUE)
 } else {

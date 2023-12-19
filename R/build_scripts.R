@@ -5,7 +5,7 @@ library(purrr)
 ## Test: MAR TS with Incompleteness only on Angles ##
 #################################################
 
-setting <- readRDS("test_setting_arx.rds")
+setting <- readRDS("test_setting_arx2.rds")
 
 # setting.l <- as.list(setting%>%filter(set_n!=1))
 
@@ -13,7 +13,7 @@ purrr::pwalk(.l = setting,
              .f = function(N_sample, N_sim, p_miss, M, set_n){
                  cat(
                      whisker::whisker.render(
-                         readLines('tmpls/mar-ts-mi-sim.tmpl'),
+                         readLines('tmpls/test-mar-ts-mi-sim.tmpl'),
                          data = list(
                              N_sample = N_sample,
                              N_sim = N_sim,
@@ -39,7 +39,7 @@ create_bash_scripts("sim_scripts",
 ## MAR TS with Incompleteness only on Angles ##
 #################################################
 
-setting <- readRDS("setting_arx.rds")
+setting <- readRDS("setting_arx2.rds")
 
 # setting.l <- as.list(setting%>%filter(set_n!=1))
 

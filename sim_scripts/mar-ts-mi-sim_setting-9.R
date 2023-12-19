@@ -9,9 +9,9 @@ source(file.path(file_path, "utils.R"))
 
 # From command line get the following arguments
 N_sim <- 500 # Number of simulation iterations
-N_sample <- 500 # Sample size
+N_sample <- 1000 # Sample size
 init_seed <- 1234 # Initial seed
-M <- 50 # Number of imputations
+M <- 75 # Number of imputations
 pop_pars <- list(
     mu_0 = c(0,0),
     B_vec = c(1, 3, 0, -5),

@@ -92,11 +92,11 @@ x1 <- parallel::mclapply(1:N_sim,
 out_path <- file.path("sim-results")
 
 
-saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 2, ".rds"))
+saveRDS(x1, file = paste0(out_path, "/test-sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 2, ".rds"))
 
 x2 <- x1 |> 
     dplyr::bind_rows()
-f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 2, ".csv")
+f_out <- paste0(out_path, "/test-sim-results-mar-ts-mi-sim_setting-", 2, ".csv")
 if (file.exists(f_out)) {
     readr::write_csv(x2, f_out, append = TRUE)
 } else {
