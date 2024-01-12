@@ -105,11 +105,18 @@ library(dplyr)
 library(ggplot2)
 library(rsimsum)
 
-setting <- readRDS("setting_arx.rds")
+setting <- readRDS("setting_arx2.rds")
 
-ll <- 1:4
+ll <- c(1:5,7,8)
 
 res_sum <- create_res_sum(ll = ll, file_prefix = "sim-results-mar-ts-mi-sim_setting-",
-                          file_suffix = ".csv", analysis_models = c("lm", "arx"))
+                          file_suffix = ".csv", analysis_models = c("arx"))
 
+res_sum
 
+sim7 <- readRDS("sim-results/sim-results-mar-ts-mi-2024-01-08-sim_setting-7.rds")
+
+sim7_df <- sim7 |> bind_rows()
+sim7[[159]] <- NULL
+sim7[[408]] <- NULL
+readr::write_csv(sim7_df, "sim-results/sim-results-mar-ts-mi-sim_setting-7.csv")
