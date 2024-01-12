@@ -62,7 +62,7 @@ test_setting <- test_setting |>
 saveRDS(test_setting, 'test_setting_arx2.rds')
 
 setting <- expand.grid(N_sample = c(250, 500, 1000),
-                       N_sim = c(500),
+                       N_sim = c(100),
                        p_miss = c(0.1, 0.5, 0.75))
 
 setting <- setting |>

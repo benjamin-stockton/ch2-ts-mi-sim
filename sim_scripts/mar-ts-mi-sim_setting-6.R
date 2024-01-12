@@ -8,7 +8,7 @@ source(file.path(file_path, "analysis.R"))
 source(file.path(file_path, "utils.R"))
 
 # From command line get the following arguments
-N_sim <- 500 # Number of simulation iterations
+N_sim <- 100 # Number of simulation iterations
 N_sample <- 1000 # Sample size
 init_seed <- 1234 # Initial seed
 M <- 50 # Number of imputations
