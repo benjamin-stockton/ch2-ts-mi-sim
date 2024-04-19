@@ -8,7 +8,7 @@ source(file.path(file_path, "analysis.R"))
 source(file.path(file_path, "utils.R"))
 
 # From command line get the following arguments
-N_sim <- 100 # Number of simulation iterations
+N_sim <- 10 # Number of simulation iterations
 N_sample <- 250 # Sample size
 init_seed <- 1234 # Initial seed
 M <- 10 # Number of imputations
@@ -28,7 +28,7 @@ miss_pars <- list(
 ) # Missingness mechanism parameters (also controls MAR/MNAR)
 
 methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxid") # "bpnreg"
-
+# methods <- c("complete", "locf", "norm")
 # seeds <- matrix(NA, nrow = N_sim, ncol = 626)
 # set.seed(init_seed * set_n)
 
@@ -65,7 +65,7 @@ x1 <- parallel::mclapply(1:N_sim,
            res_ar$prop_miss <- c(0, 0, prop_miss)
        }
        else {
-           imp_data <- impute(inc_data, l_method = "pmm", c_method = mtd, M = M, maxit = 1)
+           imp_data <- impute(inc_data, l_method = "pmm", c_method = mtd, M = M, maxit = 10)
            
            res_lm <- lm_analysis(imp_data)
            res_lm$prop_miss <- c(0,prop_miss)
@@ -89,21 +89,33 @@ x1 <- parallel::mclapply(1:N_sim,
    return(results)
 })
 
-out_path <- file.path("sim-results")
-
-
-saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 1, ".rds"))
-
-x2 <- x1 |> 
-    dplyr::bind_rows()
-f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 1, ".csv")
-if (file.exists(f_out)) {
-    readr::write_csv(x2, f_out, append = TRUE)
-} else {
-    readr::write_csv(x2, f_out)
-}
+# out_path <- file.path("sim-results")
+# 
+# 
+# saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 1, ".rds"))
+# 
+# x2 <- x1 |> 
+#     dplyr::bind_rows()
+# f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 1, ".csv")
+# if (file.exists(f_out)) {
+#     readr::write_csv(x2, f_out, append = TRUE)
+# } else {
+#     readr::write_csv(x2, f_out)
+# }
     
 
 # x1 <- readRDS("sim-results/sim-results_2023-11-30.rds")
 # 
 # x1 |> dplyr::bind_rows()
+res <- x1 |> dplyr::bind_rows()
+
+# res |>
+#     group_by(term, method, analysis_model) |>
+#     summarize(
+#         mean_est = mean(estimate),
+#         bias_est = mean(estimate - par_val),
+#         mse = mean((estimate - par_val)^2),
+#         mean_p_miss = mean(prop_miss)
+#     ) |>
+#     arrange(analysis_model, term, mse) |>
+#     print(n = 33)

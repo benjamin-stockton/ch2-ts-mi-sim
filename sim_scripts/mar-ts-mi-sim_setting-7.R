@@ -8,7 +8,7 @@ source(file.path(file_path, "analysis.R"))
 source(file.path(file_path, "utils.R"))
 
 # From command line get the following arguments
-N_sim <- 100 # Number of simulation iterations
+N_sim <- 5 # Number of simulation iterations
 N_sample <- 250 # Sample size
 init_seed <- 1234 # Initial seed
 M <- 75 # Number of imputations
@@ -27,7 +27,7 @@ miss_pars <- list(
     p_miss = 0.75
 ) # Missingness mechanism parameters (also controls MAR/MNAR)
 
-methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxid") # "bpnreg"
+methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxinc") # "bpnreg"
 
 # seeds <- matrix(NA, nrow = N_sim, ncol = 626)
 # set.seed(init_seed * set_n)
@@ -89,19 +89,19 @@ x1 <- parallel::mclapply(1:N_sim,
    return(results)
 })
 
-out_path <- file.path("sim-results")
-
-
-saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 7, ".rds"))
+# out_path <- file.path("sim-results")
+# 
+# 
+# saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 7, ".rds"))
 
 x2 <- x1 |> 
     dplyr::bind_rows()
-f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 7, ".csv")
-if (file.exists(f_out)) {
-    readr::write_csv(x2, f_out, append = TRUE)
-} else {
-    readr::write_csv(x2, f_out)
-}
+# f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 7, ".csv")
+# if (file.exists(f_out)) {
+#     readr::write_csv(x2, f_out, append = TRUE)
+# } else {
+#     readr::write_csv(x2, f_out)
+# }
     
 
 # x1 <- readRDS("sim-results/sim-results_2023-11-30.rds")

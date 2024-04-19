@@ -1,7 +1,8 @@
 generate_data <- function(N_sample, population_parameters) {
+    # Simulate N+1 X values; X[1,] corresponds to time 0
     X <- cbind(
-        arima.sim(n = N_sample, list(ar = c(0.24))),
-        arima.sim(n = N_sample, list(ar = c(0.75), ma = c(-0.25, 0.25)))
+        arima.sim(n = N_sample + 1, list(ar = c(0.24))),
+        arima.sim(n = N_sample + 1, list(ar = c(0.75), ma = c(-0.25, 0.25)))
     )
     
     mu_0 <- population_parameters$mu_0
@@ -26,14 +27,16 @@ generate_data <- function(N_sample, population_parameters) {
     sigma_y <- population_parameters$sigma_y
     psi_y <- population_parameters$psi_y
     
-    X_mat <- cbind(X, U)
+    X_mat <- cbind(X[2:(N_sample+1),], U)
+    X_mat <- rbind(c(0,0), X_mat[2:N_sample,])
+    
     # y_resp <- numeric(N_sample)
     # err <- rnorm(N_sample, 0, sigma_y)
     
     # y_resp[1] <- beta_0 + X_mat[1,] %*% beta_y[2:5] + err[1]
-    y_resp <- arima.sim(n = N_sample, model = list(order = c(1,0,0), ar = c(psi_y)),
+    y_resp <- arima.sim(n = N_sample+1, model = list(order = c(1,0,0), ar = c(psi_y)),
                         sd = sigma_y) 
-    y_resp <- beta_0 + y_resp + X_mat %*% beta_y[2:5]
+    y_resp <- beta_0 + y_resp[2:(N_sample+1)] + X_mat %*% beta_y[2:5]
     
     # for(i in 2:N_sample) {
     #     y_resp[i] <- beta_0 + psi_y * y_resp[i-1] + X_mat[i,] %*% beta_y[2:5] + err[i]
@@ -41,10 +44,12 @@ generate_data <- function(N_sample, population_parameters) {
     
     df <- data.frame(
         theta = theta,
-        X1 = X[,1],
-        X2 = X[,2],
-        U1 = U[,1],
-        U2 = U[,2],
+        X1 = X_mat[,1],
+        X2 = X_mat[,2],
+        # X1_l = X[1:(N_sample),1],
+        # X2_l = X[1:(N_sample),2],
+        U1 = X_mat[,3],
+        U2 = X_mat[,4],
         Y = y_resp
     )
     return(df)
@@ -65,17 +70,18 @@ impose_missingness <- function(df, freq = c(1), mech = "MAR", p_miss = 0.5) {
     return(mads_df1$amp)
 }
 
-# pop_par <- list(
-#     mu_0 = c(0,0),
-#     B_vec = c(1, 3, 0, -5),
-#     Psi_vec = c(0.75, -.2, -.2, .5),
-#     Sigma_vec = c(1,0,0,1),
-#     beta_y = c(5, 1, 0, 0.5, -0.25),
-#     sigma_y = 0.5,
-#     psi_y = 0.65
-# )
-# 
+pop_par <- list(
+    mu_0 = c(0,0),
+    B_vec = c(1, 3, 0, -5),
+    Psi_vec = c(0.75, -.2, -.2, .5),
+    Sigma_vec = c(1,0,0,1),
+    beta_y = c(5, 1, 0, 0.5, -0.25),
+    sigma_y = 0.5,
+    psi_y = 0.65
+)
+
 # df <- generate_data(500, pop_par)
+# df |> head()
 # ggplot(df, aes(theta, Y)) +
 #     geom_point()
 # ggplot(df, aes(X1, Y)) +
@@ -83,8 +89,10 @@ impose_missingness <- function(df, freq = c(1), mech = "MAR", p_miss = 0.5) {
 # ggplot(df, aes(X2, Y)) +
 #     geom_point()
 # 
-# ggplot(df, aes(1:500, Y)) +
+# ggplot(df, aes(1:nrow(df), Y)) +
 #     geom_line()
+# 
+# summary(lm(X1 ~ X1_l, data = df))
 # 
 # amp <- impose_missingness(df)
 # md.pattern(amp)
@@ -97,6 +105,27 @@ impose_missingness <- function(df, freq = c(1), mech = "MAR", p_miss = 0.5) {
 # pop_par$psi_y
 # pop_par$sigma_y
 # 
-# with_fit <- with(df, lm(Y ~ X1 + X2 + U1 + U2))
-# summary(with_fit)
-# with_fit$coefficients
+# imps <- mice(amp, m = 5, method = "norm")
+# 
+# with_fit <- with(imps, lm(Y ~ X1 + X2 + U1 + U2))
+# summary(pool(with_fit))
+# round(summary(pool(with_fit))[,2], 3)
+# 
+# library(pnregstan)
+# 
+# df <- generate_data(500, pop_par)
+# fit_pnarx <- fit_pn_arx_id_model(df$theta[1:400],
+#                     X = df[1:400,c("X1", "X2")],
+#                     X_ppd = df[401:500,c("X1", "X2")])
+# fit_pnarx$summary(variables = c("B_mat", "auto_cor_mat"))
+# 
+# theta_ppd <- fit_pnarx$draws(variables = "theta_ppd") |>
+#     posterior::as_draws_df() |>
+#     as.matrix()
+# 
+# 
+# bayesplot::ppc_ribbon(y = df$theta[1:400],
+#                       yrep = theta_ppd[, 1:400])
+# 
+# bayesplot::ppc_ribbon(y = df$theta[401:500],
+#                       yrep = theta_ppd[, 401:500])

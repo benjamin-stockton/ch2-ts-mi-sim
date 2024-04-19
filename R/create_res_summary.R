@@ -1,4 +1,5 @@
-simsum_plots <- function(res_sum, var, true_val, analysis_models = c("lm", "arx")) {
+simsum_plots <- function(res_sum, var, true_val, analysis_models = c("lm", "arx"),
+                         by = c("set_n", "analysis_model")) {
     s0 <- res_sum[which(res_sum$term == var),] |>
         filter(
             analysis_model %in% c(analysis_models)
@@ -7,7 +8,7 @@ simsum_plots <- function(res_sum, var, true_val, analysis_models = c("lm", "arx"
     s0 <- s0 |>
         simsum(estvarname = "estimate", se = "se", true = true_val, df = "df",
                methodvar = "method", ref = "complete", 
-               by = c("set_n", "analysis_model"), x = TRUE)
+               by = by, x = TRUE)
     
     smry_0 <- summary(s0)
     
@@ -16,7 +17,7 @@ simsum_plots <- function(res_sum, var, true_val, analysis_models = c("lm", "arx"
     p2 <- autoplot(smry_0, type = "lolly", "cover")
     p3 <- autoplot(smry_0, type = "lolly", "becover")
     
-    p4 <- cowplot::plot_grid(p0, p1, p2, p3, nrow = 2)
+    (p4 <- cowplot::plot_grid(p0, p1, p2, p3, nrow = 2))
     return(list(summary = smry_0,
                 p_bias = p1,
                 p_cov = p2,
@@ -24,7 +25,7 @@ simsum_plots <- function(res_sum, var, true_val, analysis_models = c("lm", "arx"
                 p_grid = p4))
 }
 
-create_res_sum <- function(ll, load_rds = FALSE, file_prefix = "sim-results_", file_suffix = ".csv", in_dir = "sim-results", out_dir = "sim-summary", analysis_models = "arx") {
+create_res_sum <- function(ll, load_rds = FALSE, file_prefix = "sim-results_", file_suffix = ".csv", in_dir = "sim-results", out_dir = "sim-summary", analysis_models = "arx", by = c("set_n", "analysis_model")) {
     res_sum <-
         map_df(ll,
                .f = function(sc) {
@@ -72,8 +73,8 @@ create_res_sum <- function(ll, load_rds = FALSE, file_prefix = "sim-results_", f
                    mutate(
                        set_n = sc
                    ) |>
-                       left_join(setting, by = "set_n") |>
-                       slice_head(n = 500)
+                       left_join(setting, by = "set_n") #|>
+                       # slice_head(n = 500)
                    
                })
     
@@ -91,32 +92,37 @@ create_res_sum <- function(ll, load_rds = FALSE, file_prefix = "sim-results_", f
     # saveRDS(res_sum, file = file.path(out_dir, paste0(f_out, ".rds")))
     readr::write_csv(res_sum, file = file.path(out_dir, paste0(f_out, ".csv")))
     
-    simsum_plots(res_sum, var = "intercept", true_val = 5, analysis_models = analysis_models)
-    simsum_plots(res_sum, var = "X1", true_val = 1, analysis_models = analysis_models)
-    simsum_plots(res_sum, var = "X2", true_val = 0, analysis_models = analysis_models)
-    simsum_plots(res_sum, var = "U1", true_val = 0.5, analysis_models = analysis_models)
-    simsum_plots(res_sum, var = "U2", true_val = -0.25, analysis_models = analysis_models)
+    beta0 <- simsum_plots(res_sum, var = "intercept", true_val = 5, by = by, analysis_models = analysis_models)
+    beta1 <- simsum_plots(res_sum, var = "X1", true_val = 1, by = by, analysis_models = analysis_models)
+    beta2 <- simsum_plots(res_sum, var = "X2", true_val = 0, by = by, analysis_models = analysis_models)
+    beta3 <- simsum_plots(res_sum, var = "U1", true_val = 0.5, by = by, analysis_models = analysis_models)
+    beta4 <- simsum_plots(res_sum, var = "U2", true_val = -0.25, by = by, analysis_models = analysis_models)
     
+    return(list(beta0 = beta0,
+                beta1 = beta1,
+                beta2 = beta2,
+                beta3 = beta3,
+                beta4 = beta4))
 }
 
 
-library(purrr)
-library(dplyr)
-library(ggplot2)
-library(rsimsum)
-
-setting <- readRDS("setting_arx2.rds")
-
-ll <- c(1:5,7,8)
-
-res_sum <- create_res_sum(ll = ll, file_prefix = "sim-results-mar-ts-mi-sim_setting-",
-                          file_suffix = ".csv", analysis_models = c("arx"))
-
-res_sum
-
-sim7 <- readRDS("sim-results/sim-results-mar-ts-mi-2024-01-08-sim_setting-7.rds")
-
-sim7_df <- sim7 |> bind_rows()
-sim7[[159]] <- NULL
-sim7[[408]] <- NULL
-readr::write_csv(sim7_df, "sim-results/sim-results-mar-ts-mi-sim_setting-7.csv")
+# library(purrr)
+# library(dplyr)
+# library(ggplot2)
+# library(rsimsum)
+# 
+# setting <- readRDS("setting_arx2.rds")
+# 
+# ll <- c(1:3)
+# 
+# res_sum <- create_res_sum(ll = ll, file_prefix = "sim-results-mar-ts-mi-sim_setting-",
+#                           file_suffix = ".csv", analysis_models = c("arx"))
+# 
+# res_sum
+# 
+# sim7 <- readRDS("sim-results/sim-results-mar-ts-mi-2024-01-08-sim_setting-7.rds")
+# 
+# sim7_df <- sim7 |> bind_rows()
+# sim7[[159]] <- NULL
+# sim7[[408]] <- NULL
+# readr::write_csv(sim7_df, "sim-results/sim-results-mar-ts-mi-sim_setting-7.csv")
