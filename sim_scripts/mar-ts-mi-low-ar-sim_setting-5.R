@@ -8,26 +8,27 @@ source(file.path(file_path, "analysis.R"))
 source(file.path(file_path, "utils.R"))
 
 # From command line get the following arguments
-N_sim <- 100 # Number of simulation iterations
-N_sample <- 1000 # Sample size
+N_sim <- 250 # Number of simulation iterations
+N_sample <- 500 # Sample size
 init_seed <- 1234 # Initial seed
-M <- 10 # Number of imputations
+init_seed <- 65843
+M <- 25 # Number of imputations
 pop_pars <- list(
     mu_0 = c(0,0),
     B_vec = c(0, 0.3, 0, -0.5),
-    Psi_vec = c(0.95, -.02, -.02, .95),
+    Psi_vec = c(0.2, -.02, -.02, .2),
     Sigma_vec = c(1,0,0,1),
     beta_y = c(5, 1, 0, 0.5, -0.25),
     sigma_y = 0.5,
-    psi_y = 0.95
+    psi_y = 0.25
 ) # population parameters to draw samples from
 miss_pars <- list(
     freq = c(1),
     mech = "MAR",
-    p_miss = 0.1
+    p_miss = 0.25
 ) # Missingness mechanism parameters (also controls MAR/MNAR)
 
-methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxid", "pnarxinc") # "bpnreg"
+methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxinc") # "bpnreg"
 
 # seeds <- matrix(NA, nrow = N_sim, ncol = 626)
 # set.seed(init_seed * set_n)
@@ -65,7 +66,7 @@ x1 <- parallel::mclapply(1:N_sim,
            res_ar$prop_miss <- c(0, 0, prop_miss)
        }
        else {
-           imp_data <- impute(inc_data, l_method = "pmm", c_method = mtd, M = M, maxit = 5)
+           imp_data <- impute(inc_data, l_method = "pmm", c_method = mtd, M = M, maxit = 10)
            
            res_lm <- lm_analysis(imp_data)
            res_lm$prop_miss <- c(0,prop_miss)
@@ -92,18 +93,14 @@ x1 <- parallel::mclapply(1:N_sim,
 out_path <- file.path("sim-results")
 
 
-saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 3, ".rds"))
+saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-low-ar-", Sys.Date(), "-sim_setting-", 5, ".rds"))
 
 x2 <- x1 |> 
     dplyr::bind_rows()
-f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 3, ".csv")
+f_out <- paste0(out_path, "/sim-results-mar-ts-mi-low-ar-sim_setting-", 5, ".csv")
 if (file.exists(f_out)) {
     readr::write_csv(x2, f_out, append = TRUE)
 } else {
     readr::write_csv(x2, f_out)
 }
     
-
-# x1 <- readRDS("sim-results/sim-results_2023-11-30.rds")
-# 
-# x1 |> dplyr::bind_rows()

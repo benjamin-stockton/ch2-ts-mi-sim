@@ -24,7 +24,7 @@ pop_pars <- list(
 miss_pars <- list(
     freq = c(1),
     mech = "MAR",
-    p_miss = 0.75
+    p_miss = 0.5
 ) # Missingness mechanism parameters (also controls MAR/MNAR)
 
 methods <- c("complete", "vmreg", "pnregid", "pnarxid") # "bpnreg"

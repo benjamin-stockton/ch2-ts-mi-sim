@@ -8,18 +8,18 @@ source(file.path(file_path, "analysis.R"))
 source(file.path(file_path, "utils.R"))
 
 # From command line get the following arguments
-N_sim <- 10 # Number of simulation iterations
+N_sim <- 100 # Number of simulation iterations
 N_sample <- 250 # Sample size
 init_seed <- 1234 # Initial seed
 M <- 10 # Number of imputations
 pop_pars <- list(
     mu_0 = c(0,0),
-    B_vec = c(1, 3, 0, -5),
-    Psi_vec = c(0.75, -.2, -.2, .5),
+    B_vec = c(0, 0.3, 0, -0.5),
+    Psi_vec = c(0.95, -.02, -.02, .95),
     Sigma_vec = c(1,0,0,1),
     beta_y = c(5, 1, 0, 0.5, -0.25),
     sigma_y = 0.5,
-    psi_y = 0.65
+    psi_y = 0.95
 ) # population parameters to draw samples from
 miss_pars <- list(
     freq = c(1),
@@ -27,8 +27,8 @@ miss_pars <- list(
     p_miss = 0.1
 ) # Missingness mechanism parameters (also controls MAR/MNAR)
 
-methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxid") # "bpnreg"
-# methods <- c("complete", "locf", "norm")
+methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxid", "pnarxinc") # "bpnreg"
+
 # seeds <- matrix(NA, nrow = N_sim, ncol = 626)
 # set.seed(init_seed * set_n)
 
@@ -36,7 +36,7 @@ methods <- c("complete", "locf", "vmreg", "pnregid", "pnarxid") # "bpnreg"
 # total_pars <- length(pop_pars) + length(miss_pars) + 4*P + 1
 
 x1 <- parallel::mclapply(1:N_sim,
-               mc.cores = 15,
+               mc.cores = 125,
                 function(x) {
     print(x)
 
@@ -65,7 +65,7 @@ x1 <- parallel::mclapply(1:N_sim,
            res_ar$prop_miss <- c(0, 0, prop_miss)
        }
        else {
-           imp_data <- impute(inc_data, l_method = "pmm", c_method = mtd, M = M, maxit = 10)
+           imp_data <- impute(inc_data, l_method = "pmm", c_method = mtd, M = M, maxit = 5)
            
            res_lm <- lm_analysis(imp_data)
            res_lm$prop_miss <- c(0,prop_miss)
@@ -89,33 +89,21 @@ x1 <- parallel::mclapply(1:N_sim,
    return(results)
 })
 
-# out_path <- file.path("sim-results")
-# 
-# 
-# saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 1, ".rds"))
-# 
-# x2 <- x1 |> 
-#     dplyr::bind_rows()
-# f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 1, ".csv")
-# if (file.exists(f_out)) {
-#     readr::write_csv(x2, f_out, append = TRUE)
-# } else {
-#     readr::write_csv(x2, f_out)
-# }
+out_path <- file.path("sim-results")
+
+
+saveRDS(x1, file = paste0(out_path, "/sim-results-mar-ts-mi-", Sys.Date(), "-sim_setting-", 1, ".rds"))
+
+x2 <- x1 |> 
+    dplyr::bind_rows()
+f_out <- paste0(out_path, "/sim-results-mar-ts-mi-sim_setting-", 1, ".csv")
+if (file.exists(f_out)) {
+    readr::write_csv(x2, f_out, append = TRUE)
+} else {
+    readr::write_csv(x2, f_out)
+}
     
 
 # x1 <- readRDS("sim-results/sim-results_2023-11-30.rds")
 # 
 # x1 |> dplyr::bind_rows()
-res <- x1 |> dplyr::bind_rows()
-
-# res |>
-#     group_by(term, method, analysis_model) |>
-#     summarize(
-#         mean_est = mean(estimate),
-#         bias_est = mean(estimate - par_val),
-#         mse = mean((estimate - par_val)^2),
-#         mean_p_miss = mean(prop_miss)
-#     ) |>
-#     arrange(analysis_model, term, mse) |>
-#     print(n = 33)
